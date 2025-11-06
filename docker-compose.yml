@@ -7,6 +7,9 @@ services:
       bash -c "$$KAFKA_HOME/bin/zookeeper-server-start.sh $$KAFKA_HOME/config/zookeeper.properties"
     ports:
       - "2181:2181"
+    volumes:
+      - ./zookeeper_data:/var/lib/zookeeper
+      - ./zookeeper_logs:/var/log/zookeeper
     networks:
       kafka_network:
         ipv4_address: 172.28.0.10
@@ -19,9 +22,6 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
-    networks:
-      kafka_network:
-        ipv4_address: 172.28.0.11
     command: >
       bash -c "
         sed -i 's|zookeeper.connect=.*|zookeeper.connect=zookeeper:2181|' $$KAFKA_HOME/config/server.properties &&
@@ -29,28 +29,101 @@ services:
         echo 'advertised.listeners=PLAINTEXT://172.28.0.11:9092' >> $$KAFKA_HOME/config/server.properties &&
         $$KAFKA_HOME/bin/kafka-server-start.sh $$KAFKA_HOME/config/server.properties
       "
+    volumes:
+      - ./kafka_data:/var/lib/kafka/data
+      - ./kafka_logs:/var/log/kafka
+    networks:
+      kafka_network:
+        ipv4_address: 172.28.0.11
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
-    hostname: kafka-ui
     ports:
       - "8080:8080"
     depends_on:
       - kafka
+      - zookeeper
+      - ksqldb-server
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-      KAFKA_CLUSTERS_0_READONLY: "false"
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+      KAFKA_CLUSTERS_0_ZOOKEEPER: "zookeeper:2181"
+      KAFKA_CLUSTERS_0_KSQLDBSERVER: "http://ksqldb-server:8088"
+      KAFKA_CLUSTERS_0_KSQLDBSERVERAUTHUSERNAME: "admin"
+      KAFKA_CLUSTERS_0_KSQLDBSERVERAUTHPASSWORD: "admin123"
     networks:
       kafka_network:
         ipv4_address: 172.28.0.12
+    volumes:
+      - ./kafka_ui_data:/etc/kafka-ui
+
+  # 🧠 ksqlDB Server
+  # 🧩 ksqlDB Server com autenticação BASIC inline
+  ksqldb-server:
+    image: confluentinc/ksqldb-server:0.29.0
+    container_name: ksqldb-server
+    depends_on:
+      - kafka
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_LISTENERS: "http://0.0.0.0:8088"
+      KSQL_BOOTSTRAP_SERVERS: "kafka:9092"
+      KSQL_AUTHENTICATION_METHOD: "BASIC"
+      KSQL_OPTS: "-Dksql.security.basic.auth.credentials.file=/etc/ksql/credentials.properties"
+    volumes:
+      - ./ksql_credentials.properties:/etc/ksql/credentials.properties:ro
+    networks:
+      kafka_network:
+        ipv4_address: 172.28.0.14
 
 
+  # 💻 ksqlDB CLI autenticado
+  ksqldb-cli:
+    image: confluentinc/ksqldb-cli:0.29.0
+    container_name: ksqldb-cli
+    depends_on:
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
+    environment:
+      KSQL_SERVER_URL: "http://ksqldb-server:8088"
+      KSQL_BASIC_AUTH_USER_INFO: "admin:admin123"
+    networks:
+      kafka_network:
+        ipv4_address: 172.28.0.15
+
+
+  ksqldb-ui:
+    image: deniskrumko/ksqldb-ui:latest
+    environment:
+      APP_CONFIG: /config.toml
+    volumes:
+      - ./development.toml:/config.toml
+    ports:
+      - 8082:8080
+    depends_on:
+      - ksqldb-server
+    networks:
+      kafka_network:
+        ipv4_address: 172.28.0.16
+
+
+# 🌐 Rede
 networks:
   kafka_network:
     driver: bridge
     ipam:
       config:
         - subnet: 172.28.0.0/16
+
+# 💾 Volumes persistentes
+volumes:
+  zookeeper_data:
+  zookeeper_logs:
+  kafka_data:
+  kafka_logs:
+  kafka_ui_data:
+  ksqldb_state:
+  ksqldb_config:

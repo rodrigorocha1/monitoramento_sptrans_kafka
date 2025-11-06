@@ -1,0 +1,4 @@
+[servers.localhost]
+url = "http://172.28.0.14:8088"
+user = "admin"
+password = "admin123"
