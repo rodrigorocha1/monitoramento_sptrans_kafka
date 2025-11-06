@@ -1,0 +1,56 @@
+services:
+  zookeeper:
+    image: kafka_zookeeper:latest
+    container_name: zookeeper
+    hostname: zookeeper
+    command: >
+      bash -c "$$KAFKA_HOME/bin/zookeeper-server-start.sh $$KAFKA_HOME/config/zookeeper.properties"
+    ports:
+      - "2181:2181"
+    networks:
+      kafka_network:
+        ipv4_address: 172.28.0.10
+
+  kafka:
+    image: kafka_zookeeper:latest
+    container_name: kafka
+    hostname: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    networks:
+      kafka_network:
+        ipv4_address: 172.28.0.11
+    command: >
+      bash -c "
+        sed -i 's|zookeeper.connect=.*|zookeeper.connect=zookeeper:2181|' $$KAFKA_HOME/config/server.properties &&
+        sed -i 's|#listeners=PLAINTEXT://:9092|listeners=PLAINTEXT://0.0.0.0:9092|' $$KAFKA_HOME/config/server.properties &&
+        echo 'advertised.listeners=PLAINTEXT://172.28.0.11:9092' >> $$KAFKA_HOME/config/server.properties &&
+        $$KAFKA_HOME/bin/kafka-server-start.sh $$KAFKA_HOME/config/server.properties
+      "
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    hostname: kafka-ui
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CLUSTERS_0_READONLY: "false"
+    networks:
+      kafka_network:
+        ipv4_address: 172.28.0.12
+
+
+networks:
+  kafka_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
