@@ -4,3 +4,5 @@
 .idea
 kafka_data
 /docs/.~lock.LibreOffice Writer.odt#
+*.env
+*.odt#
