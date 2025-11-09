@@ -1,21 +1,18 @@
-import os
 from datetime import datetime
 from typing import List, Optional, Final
 from zoneinfo import ZoneInfo
 
 import requests
-from dotenv import load_dotenv
 
+from src.config.config import Config
 from src.modelos.linhas import Linhas
 from src.modelos.onibus import Onibus
-
-load_dotenv()
 
 
 class ApiSptrans:
     def __init__(self):
-        self.__CHAVE: Final[str] = os.environ['CHAVE_API']
-        self.__URL: Final[str] = os.environ['URL_API_SPTRANS']
+        self.__CHAVE = Config.CHAVE_API
+        self.__URL = Config.URL_API_SPTRANS
 
     def __realizar_login(self) -> Optional[str]:
         url_completa: Final[str] = f'{self.__URL}Login/Autenticar?token={self.__CHAVE}'
