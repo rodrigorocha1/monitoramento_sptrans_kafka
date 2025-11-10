@@ -1,12 +1,11 @@
 from datetime import datetime
+from itertools import chain
 from typing import List, Optional, Final
-from zoneinfo import ZoneInfo
 
 import requests
 
 from src.config.config import Config
 from src.modelos.linhas import Linhas
-from src.modelos.onibus import Onibus
 
 
 class ApiSptrans:
@@ -19,28 +18,25 @@ class ApiSptrans:
         req = requests.post(url_completa)
         return req.cookies.get('apiCredentials')
 
-    def __parse_onibus(self, v: dict) -> Onibus:
-        ta_utc = datetime.fromisoformat(v["ta"].replace("Z", "+00:00"))
-        ta_brasilia = ta_utc.astimezone(ZoneInfo("America/Sao_Paulo"))
-        return Onibus(
-            p=v["p"],
-            a=v["a"],
-            ta=ta_brasilia,
-            py=v["py"],
-            px=v["px"],
-            sv=v.get("sv"),
-            is_=v.get("is"),
-        )
+    def __desnormalizar_json(self, ln: dict) -> List[Linhas]:
+        return list(
+            map(
+                lambda vs_item: Linhas(
+                    c=ln.get('c'),
+                    cl=ln.get('cl'),
+                    sl=ln.get('cl'),
+                    lt0=ln.get("lt0"),
+                    lt1=ln.get("lt1"),
+                    qv=ln.get("qv"),
+                    p=vs_item.get("p"),
+                    a=vs_item.get("a"),
+                    ta=datetime.fromisoformat(vs_item.get("ta")),
+                    py=vs_item.get("py"),
+                    px=vs_item.get("px")
 
-    def __parse_linha(self, ln: dict) -> Linhas:
-        return Linhas(
-            c=ln["c"],
-            cl=ln["cl"],
-            sl=ln["sl"],
-            lt0=ln["lt0"],
-            lt1=ln["lt1"],
-            qv=ln["qv"],
-            vs=[self.__parse_onibus(v) for v in ln.get("vs", [])],
+                ),
+                ln["vs"]
+            )
         )
 
     def buscar_linhas(self) -> List[Linhas]:
@@ -48,12 +44,16 @@ class ApiSptrans:
         url_completa: Final[str] = f'{self.__URL}Posicao'
         headers = {'Cookie': f'apiCredentials={cookie}'}
         req = requests.get(url=url_completa, headers=headers)
-        linhas_raw = req.json().get('l', [])
-        return list(map(self.__parse_linha, linhas_raw))
+        resposta = req.json()
+
+        json_desnormalizado = list(chain.from_iterable(map(self.__desnormalizar_json, resposta['l'])))
+
+        return json_desnormalizado
 
 
 if __name__ == '__main__':
     api_sptrans = ApiSptrans()
     linhas = api_sptrans.buscar_linhas()
-    for linha in linhas:
+    print(linhas[0: 2])
+    for linha in linhas[0: 2]:
         print(linha)

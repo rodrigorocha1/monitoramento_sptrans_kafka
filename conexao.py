@@ -1,47 +1,36 @@
-from kafka import KafkaProducer, KafkaConsumer
-from kafka.errors import KafkaError
-import time
+from time import sleep
 
-TOPIC = "teste_conexao"
-BOOTSTRAP_SERVERS = ["172.28.0.11:9092"]  # IP e porta do seu container Kafka
+import requests
+import json
 
-def testar_produtor():
-    print("🔹 Testando envio de mensagens para o Kafka...")
-    try:
-        producer = KafkaProducer(
-            bootstrap_servers=BOOTSTRAP_SERVERS,
-            value_serializer=lambda v: v.encode("utf-8")
-        )
-        for i in range(5):
-            msg = f"mensagem_teste_{i}"
-            producer.send(TOPIC, msg)
-            print(f"✅ Enviada: {msg}")
-            time.sleep(0.5)
-        producer.flush()
-        print("✅ Todas as mensagens foram enviadas com sucesso!\n")
-    except KafkaError as e:
-        print(f"❌ Erro ao enviar mensagens: {e}")
+url = "http://172.28.0.14:8088/query"
 
-def testar_consumidor():
-    print("🔹 Testando consumo de mensagens do Kafka...")
-    try:
-        consumer = KafkaConsumer(
-            TOPIC,
-            bootstrap_servers=BOOTSTRAP_SERVERS,
-            auto_offset_reset="earliest",
-            enable_auto_commit=True,
-            group_id="grupo_teste",
-            value_deserializer=lambda v: v.decode("utf-8"),
-        )
-        for msg in consumer:
-            print(f"📩 Recebida: {msg.value}")
-            break  # sai após receber a primeira mensagem
-        consumer.close()
-        print("✅ Conexão e leitura bem-sucedidas!")
-    except KafkaError as e:
-        print(f"❌ Erro ao consumir mensagens: {e}")
+payload = json.dumps({
+    "ksql": """
+SELECT l.*
+FROM LINHAS_ONIBUS_RAW l
 
-if __name__ == "__main__":
-    testar_produtor()
-    time.sleep(2)
-    testar_consumidor()
+EMIT CHANGES;
+
+
+
+""",
+    "streamsProperties": {
+        "auto.offset.reset": "earliest"
+    }
+})
+
+headers = {
+    'Content-Type': 'application/vnd.ksql.v1+json'
+}
+
+with requests.post(url, headers=headers, data=payload, stream=True) as response:
+    for line in response.iter_lines():
+        print(line)
+        sleep(90)
+
+        if line:
+            print(json.loads(line))
+
+        print('=' * 100)
+

@@ -1,6 +1,5 @@
-from typing import List, TypedDict
-
-from src.modelos.onibus import Onibus
+from datetime import datetime
+from typing import TypedDict
 
 
 class Linhas(TypedDict):
@@ -10,4 +9,8 @@ class Linhas(TypedDict):
     lt0: str
     lt1: str
     qv: int
-    vs: List[Onibus]
+    p: int
+    a: bool
+    ta: datetime
+    py: float
+    px: float
