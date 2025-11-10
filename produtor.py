@@ -8,6 +8,7 @@ from kafka.admin import NewTopic
 from kafka.errors import TopicAlreadyExistsError
 
 from src.config.config import Config
+from src.modelos.linha import Linha
 from src.servicos.api_sptrans import ApiSptrans
 
 
@@ -40,7 +41,7 @@ class Produtor:
         except TopicAlreadyExistsError:
             print(f"Tópico '{self.__topico}' já existe.")
 
-    def __enviar_dados(self, codigo_linha: str, dados: Dict):
+    def __enviar_dados(self, codigo_linha: str, dados: Linha):
 
         self.__produtor.send(
             topic=self.__topico,
@@ -54,9 +55,9 @@ class Produtor:
         while True:
             dados_linhas = self.__req_api_sptrans.buscar_linhas()
             codigo_linha = 'linhas_sptrans'
-            payload = {"linhas": dados_linhas}
-            self.__enviar_dados(codigo_linha, payload)
-            self.__produtor.flush()
+            for linha in dados_linhas:
+                self.__enviar_dados(codigo_linha, linha)
+                self.__produtor.flush()
             sleep(intervalo)
 
     @staticmethod

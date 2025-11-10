@@ -5,7 +5,7 @@ from typing import List, Optional, Final
 import requests
 
 from src.config.config import Config
-from src.modelos.linhas import Linhas
+from src.modelos.linha import Linha
 
 
 class ApiSptrans:
@@ -18,10 +18,10 @@ class ApiSptrans:
         req = requests.post(url_completa)
         return req.cookies.get('apiCredentials')
 
-    def __desnormalizar_json(self, ln: dict) -> List[Linhas]:
+    def __desnormalizar_json(self, ln: dict) -> List[Linha]:
         return list(
             map(
-                lambda vs_item: Linhas(
+                lambda vs_item: Linha(
                     c=ln.get('c'),
                     cl=ln.get('cl'),
                     sl=ln.get('cl'),
@@ -39,7 +39,7 @@ class ApiSptrans:
             )
         )
 
-    def buscar_linhas(self) -> List[Linhas]:
+    def buscar_linhas(self) -> List[Linha]:
         cookie = self.__realizar_login()
         url_completa: Final[str] = f'{self.__URL}Posicao'
         headers = {'Cookie': f'apiCredentials={cookie}'}

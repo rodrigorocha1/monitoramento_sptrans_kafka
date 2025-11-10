@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TypedDict
 
 
-class Linhas(TypedDict):
+class Linha(TypedDict):
     c: str
     cl: int
     sl: int
