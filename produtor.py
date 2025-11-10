@@ -58,6 +58,7 @@ class Produtor:
             for linha in dados_linhas:
                 self.__enviar_dados(codigo_linha, linha)
                 self.__produtor.flush()
+                sleep(0.01)
             sleep(intervalo)
 
     @staticmethod
