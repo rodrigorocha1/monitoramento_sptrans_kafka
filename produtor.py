@@ -73,7 +73,6 @@ class Produtor:
             dados_linhas = self.__req_api_sptrans.buscar_linhas()
             codigo_linha = 'linhas_sptrans'
             for linha in dados_linhas:
-                print(linha)
                 self.__enviar_dados(codigo_linha, linha)
                 self.__produtor.flush()
 
