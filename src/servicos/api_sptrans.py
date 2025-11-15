@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from itertools import chain
 from typing import List, Optional, Final
 
@@ -35,7 +35,10 @@ class ApiSptrans:
                     qv=ln["qv"],
                     p=vs_item["p"],
                     a=vs_item["a"],
-                    ta=datetime.fromisoformat(vs_item["ta"]),
+                    ta=datetime.strptime(vs_item["ta"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).astimezone(
+                        timezone(timedelta(hours=-3)
+                                 )
+                    ),
                     py=vs_item["py"],
                     px=vs_item["px"]
 

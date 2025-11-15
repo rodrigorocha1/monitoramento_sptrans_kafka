@@ -16,8 +16,10 @@ class Produtor:
         self.__URL_KAFKA = Config.URL_KAFKA
         self.__produtor = KafkaProducer(
             bootstrap_servers=self.__URL_KAFKA,
-            value_serializer=lambda v: json.dumps(v, default=self.__json_serializer).encode('utf-8'),
-            key_serializer=lambda k: k.encode('utf-8')
+            value_serializer=lambda v: json.dumps(v, default=self.__json_serializer, ensure_ascii=False).encode(
+                'utf-8'),
+            key_serializer=lambda k: k.encode('utf-8'),
+
         )
         self.__admin_cliente = KafkaAdminClient(
             bootstrap_servers=self.__URL_KAFKA
