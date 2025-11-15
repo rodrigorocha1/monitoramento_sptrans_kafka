@@ -78,8 +78,35 @@ services:
       - "8081:8081"
     environment:
       <<: *common-env
+
       KSQL_LISTENERS: "http://0.0.0.0:8088"
       KSQL_BOOTSTRAP_SERVERS: "kafka:9092"
+
+      # Timeouts
+      KSQL_REQUEST_TIMEOUT_MS: 300000
+      KSQL_STREAMS_REQUEST_TIMEOUT_MS: 300000
+      KSQL_STREAMS_METADATA_MAX_AGE_MS: 30000
+      KSQL_STREAMS_MAX_PROCESSING_MS: 300000
+      KSQL_STREAMS_PROCESSING_TIMEOUT_MS: 300000
+      KSQL_STREAMS_COMMIT_INTERVAL_MS: 500000
+      KSQL_STREAMS_NUM_STREAM_THREADS: 2
+      KSQL_STREAMS_CACHE_MAX_BYTES_BUFFERING: 0
+
+      # Push Query v2 (correto)
+      KSQL_SHARED_RUNTIME_ENABLED: "true"
+      KSQL_QUERY_PUSH_V2_ENABLED: "true"
+      KSQL_QUERY_PUSH_V2_REGISTRY_INSTALLED: "true"
+
+      # Rede e timeouts extras
+      KSQL_STREAMS_SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS: 30000
+      KSQL_STREAMS_RETRY_BACKOFF_MS: 50000
+      KSQL_STREAMS_RECONNECT_BACKOFF_MS: 50000
+
+      # Pull queries
+      KSQL_QUERY_PULL_INTERNAL_TIMEOUT_MS: 300000
+      KSQL_QUERY_PULL_TABLE_SCAN_ENABLED: "true"
+      KSQL_QUERY_PULL_ENABLE_STALE_READS: "true"
+
     networks:
       kafka_network:
         ipv4_address: 172.28.0.14
@@ -88,8 +115,6 @@ services:
   ksqldb-cli:
     image: confluentinc/ksqldb-cli:0.29.0
     container_name: ksqldb-cli
-
-
     depends_on:
       - ksqldb-server
     entrypoint: /bin/sh
@@ -99,22 +124,7 @@ services:
       KSQL_SERVER_URL: "http://ksqldb-server:8088"
     networks:
       kafka_network:
-        ipv4_address: 172.28.0.15
 
-  ksqldb-ui:
-    image: deniskrumko/ksqldb-ui:latest
-    environment:
-      APP_CONFIG: /config.toml
-      <<: *common-env
-    volumes:
-      - ./development.toml:/config.toml
-    ports:
-      - "8082:8080"
-    depends_on:
-      - ksqldb-server
-    networks:
-      kafka_network:
-        ipv4_address: 172.28.0.16
 
 
 # 🌐 Rede
