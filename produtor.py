@@ -1,7 +1,6 @@
 import json
 from datetime import datetime
 from time import sleep
-from typing import Dict
 
 from kafka import KafkaProducer, KafkaAdminClient
 from kafka.admin import NewTopic
