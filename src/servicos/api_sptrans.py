@@ -1,10 +1,11 @@
 from datetime import datetime, timezone, timedelta
 from itertools import chain
-from typing import List, Optional, Final
+from typing import List, Final
 
 import requests
 
 from src.config.config import Config
+from src.excecao.error_login_sptrans import ErroLoginSPTrans
 from src.modelos.linha import Linha
 
 
@@ -12,16 +13,29 @@ class ApiSptrans:
     def __init__(self):
         self.__CHAVE = Config.CHAVE_API
         self.__URL = Config.URL_API_SPTRANS
+        self.__cookie = None  # cache do cookie
 
-    def __realizar_login(self) -> Optional[str]:
-        """
-        Método para fazer o login
-        :return: cookies
-        :rtype: Optional[str]
-        """
-        url_completa: Final[str] = f'{self.__URL}Login/Autenticar?token={self.__CHAVE}'
-        req = requests.post(url_completa)
-        return req.cookies.get('apiCredentials')
+    def __realizar_login(self) -> str:
+
+        url_completa: Final[str] = f"{self.__URL}Login/Autenticar?token={self.__CHAVE}"
+        resp = requests.post(url_completa, timeout=60)
+
+        if resp.status_code != 200:
+            raise ErroLoginSPTrans(f"Erro ao logar na API da SPTrans: {resp.status_code}")
+
+        cookie = resp.cookies.get("apiCredentials")
+
+        if not cookie:
+            raise ErroLoginSPTrans("API SPTrans retornou login sem cookie válido.")
+
+        self.__cookie = cookie
+        return cookie
+
+    def __get_cookie(self) -> str:
+
+        if self.__cookie:
+            return self.__cookie
+        return self.__realizar_login()
 
     def __desnormalizar_json(self, ln: dict) -> List[Linha]:
         return list(
@@ -35,38 +49,42 @@ class ApiSptrans:
                     qv=ln["qv"],
                     p=vs_item["p"],
                     a=vs_item["a"],
-                    ta=datetime.strptime(vs_item["ta"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).astimezone(
-                        timezone(timedelta(hours=-3)
-                                 )
+                    ta=datetime.strptime(
+                        vs_item["ta"], "%Y-%m-%dT%H:%M:%SZ"
+                    ).replace(tzinfo=timezone.utc).astimezone(
+                        timezone(timedelta(hours=-3))
                     ),
                     py=vs_item["py"],
-                    px=vs_item["px"]
-
+                    px=vs_item["px"],
                 ),
-                ln["vs"]
+                ln["vs"],
             )
         )
 
     def buscar_linhas(self) -> List[Linha]:
-        """
-        Método para buscar todas as linhas da api da sptrans
-        :return: Lista com todas as linha
-        :rtype: List[Linha]
-        """
-        cookie = self.__realizar_login()
-        url_completa: Final[str] = f'{self.__URL}Posicao'
+
+        cookie = self.__get_cookie()
+        url_completa: Final[str] = f"{self.__URL}Posicao"
         headers = {'Cookie': f'apiCredentials={cookie}'}
-        req = requests.get(url=url_completa, headers=headers)
-        resposta = req.json()
 
-        json_desnormalizado = list(chain.from_iterable(map(self.__desnormalizar_json, resposta['l'])))
+        resp = requests.get(url=url_completa, headers=headers, timeout=60)
 
+        if resp.status_code in [401, 403]:
+            print('refazendo login')
+            cookie = self.__realizar_login()
+            headers['Cookie'] = f'apiCredentials={cookie}'
+            resp = requests.get(url=url_completa, headers=headers)
+
+        resp.raise_for_status()
+
+        resposta = resp.json()
+        json_desnormalizado = list(
+            chain.from_iterable(map(self.__desnormalizar_json, resposta['l']))
+        )
         return json_desnormalizado
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     api_sptrans = ApiSptrans()
     linhas = api_sptrans.buscar_linhas()
-    print(linhas[0: 2])
-    for linha in linhas[0: 2]:
-        print(linha)
+    print(linhas[:2])
