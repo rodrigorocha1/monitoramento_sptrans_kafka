@@ -14,6 +14,11 @@ class ApiSptrans:
         self.__URL = Config.URL_API_SPTRANS
 
     def __realizar_login(self) -> Optional[str]:
+        """
+        Método para fazer o login
+        :return: cookies
+        :rtype: Optional[str]
+        """
         url_completa: Final[str] = f'{self.__URL}Login/Autenticar?token={self.__CHAVE}'
         req = requests.post(url_completa)
         return req.cookies.get('apiCredentials')
@@ -22,17 +27,17 @@ class ApiSptrans:
         return list(
             map(
                 lambda vs_item: Linha(
-                    c=ln.get('c'),
-                    cl=ln.get('cl'),
-                    sl=ln.get('cl'),
-                    lt0=ln.get("lt0"),
-                    lt1=ln.get("lt1"),
-                    qv=ln.get("qv"),
-                    p=vs_item.get("p"),
-                    a=vs_item.get("a"),
-                    ta=datetime.fromisoformat(vs_item.get("ta")),
-                    py=vs_item.get("py"),
-                    px=vs_item.get("px")
+                    c=ln["c"],
+                    cl=ln["cl"],
+                    sl=ln["sl"],
+                    lt0=ln["lt0"],
+                    lt1=ln["lt1"],
+                    qv=ln["qv"],
+                    p=vs_item["p"],
+                    a=vs_item["a"],
+                    ta=datetime.fromisoformat(vs_item["ta"]),
+                    py=vs_item["py"],
+                    px=vs_item["px"]
 
                 ),
                 ln["vs"]
@@ -40,6 +45,11 @@ class ApiSptrans:
         )
 
     def buscar_linhas(self) -> List[Linha]:
+        """
+        Método para buscar todas as linhas da api da sptrans
+        :return: Lista com todas as linha
+        :rtype: List[Linha]
+        """
         cookie = self.__realizar_login()
         url_completa: Final[str] = f'{self.__URL}Posicao'
         headers = {'Cookie': f'apiCredentials={cookie}'}

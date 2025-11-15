@@ -30,6 +30,10 @@ class Produtor:
         self.__criar_topico()
 
     def __criar_topico(self):
+        """
+        Método para criar tópico do kafka
+
+        """
         novo_topico = NewTopic(
             name=self.__topico,
             num_partitions=self.__num_particoes,
@@ -42,7 +46,14 @@ class Produtor:
             print(f"Tópico '{self.__topico}' já existe.")
 
     def __enviar_dados(self, codigo_linha: str, dados: Linha):
+        """
+        método para enviar dados ao kafka
+        :param codigo_linha: código da linha do ônibus
+        :type codigo_linha: str
+        :param dados: dados da Linha de ônubibos
+        :type dados: Linna
 
+        """
         self.__produtor.send(
             topic=self.__topico,
             value=dados,
@@ -50,7 +61,12 @@ class Produtor:
         )
 
     def rodar_produtor(self, intervalo: int = 30):
+        """
+        Método para rodar o produtor kafka
+        :param intervalo: intervalo de tempo de delay
+        :type intervalo: int
 
+        """
         print("Iniciando produtor Kafka...")
         while True:
             dados_linhas = self.__req_api_sptrans.buscar_linhas()
