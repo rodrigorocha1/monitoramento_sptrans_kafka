@@ -18,7 +18,7 @@ class ApiSptrans:
     def __realizar_login(self) -> str:
 
         url_completa: Final[str] = f"{self.__URL}Login/Autenticar?token={self.__CHAVE}"
-        resp = requests.post(url_completa, timeout=60)
+        resp = requests.post(url_completa, timeout=10)
 
         if resp.status_code != 200:
             raise ErroLoginSPTrans(f"Erro ao logar na API da SPTrans: {resp.status_code}")
@@ -67,7 +67,7 @@ class ApiSptrans:
         url_completa: Final[str] = f"{self.__URL}Posicao"
         headers = {'Cookie': f'apiCredentials={cookie}'}
 
-        resp = requests.get(url=url_completa, headers=headers, timeout=60)
+        resp = requests.get(url=url_completa, headers=headers, timeout=10)
 
         if resp.status_code in [401, 403]:
             print('refazendo login')
