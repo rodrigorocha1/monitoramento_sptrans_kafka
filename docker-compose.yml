@@ -69,7 +69,7 @@ services:
   # 🧠 ksqlDB Server
   # 🧩 ksqlDB Server com autenticação BASIC inline
   ksqldb-server:
-    image: confluentinc/ksqldb-server:0.29.0
+    image: confluentinc/ksqldb-server:latest
     container_name: ksqldb-server
     depends_on:
       - kafka
@@ -107,13 +107,18 @@ services:
       KSQL_QUERY_PULL_TABLE_SCAN_ENABLED: "true"
       KSQL_QUERY_PULL_ENABLE_STALE_READS: "true"
 
+      # Diretório de extensões (UDFs)
+      KSQL_KSQL_EXTENSION_DIR: "/opt/ksql/ext/"
+    volumes:
+      - ./udf:/opt/ksql/ext/
+
     networks:
       kafka_network:
         ipv4_address: 172.28.0.14
 
   # 💻 ksqlDB CLI autenticado
   ksqldb-cli:
-    image: confluentinc/ksqldb-cli:0.29.0
+    image: confluentinc/ksqldb-cli:latest
     container_name: ksqldb-cli
     depends_on:
       - ksqldb-server
