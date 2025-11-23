@@ -35,6 +35,8 @@ services:
         sed -i 's|zookeeper.connect=.*|zookeeper.connect=zookeeper:2181|' $$KAFKA_HOME/config/server.properties &&
         sed -i 's|#listeners=PLAINTEXT://:9092|listeners=PLAINTEXT://0.0.0.0:9092|' $$KAFKA_HOME/config/server.properties &&
         echo 'advertised.listeners=PLAINTEXT://172.28.0.11:9092' >> $$KAFKA_HOME/config/server.properties &&
+        echo 'log.retention.ms=604800000' >> $$KAFKA_HOME/config/server.properties && \
+        echo 'log.cleanup.policy=compact' >> $$KAFKA_HOME/config/server.properties && \
         $$KAFKA_HOME/bin/kafka-server-start.sh $$KAFKA_HOME/config/server.properties
       "
     volumes:

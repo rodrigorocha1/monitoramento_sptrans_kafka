@@ -73,8 +73,9 @@ class Produtor:
             dados_linhas = self.__req_api_sptrans.buscar_linhas()
             codigo_linha = 'linhas_sptrans'
             for linha in dados_linhas:
-                self.__enviar_dados(codigo_linha, linha)
-                self.__produtor.flush()
+                if linha.get('c') == "857C-10":
+                    self.__enviar_dados(codigo_linha, linha)
+                    self.__produtor.flush()
 
             sleep(intervalo)
 
@@ -87,4 +88,4 @@ class Produtor:
 
 if __name__ == '__main__':
     produtor = Produtor()
-    produtor.rodar_produtor(intervalo=30)
+    produtor.rodar_produtor(intervalo= 120)
