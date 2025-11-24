@@ -1,4 +1,4 @@
-CREATE STREAM ONIBUS_POSICAO (
+CREATE STREAM ONIBUS_POSICAO_BRUTO (
     c STRING,
     cl INTEGER,
     sl INTEGER,
@@ -14,6 +14,107 @@ CREATE STREAM ONIBUS_POSICAO (
     KAFKA_TOPIC = 'linhas_onibus',
     VALUE_FORMAT = 'JSON'
 );
+
+
+CREATE TABLE ONIBUS_POSICAO_ATUAL AS
+SELECT
+    p,
+    LATEST_BY_OFFSET(py) AS py,
+    LATEST_BY_OFFSET(px) AS px,
+    LATEST_BY_OFFSET(ta) AS ta
+FROM ONIBUS_POSICAO
+GROUP BY p;
+
+
+
+CREATE STREAM ONIBUS_POSICAO_REKEY
+    WITH (PARTITIONS = 6) AS
+SELECT *
+FROM ONIBUS_POSICAO
+PARTITION BY p;
+
+
+CREATE STREAM ONIBUS_POSICAO_ANTERIOR_ATUAL AS
+SELECT
+    s.p,
+    t.py AS prev_py,
+    t.px AS prev_px,
+    t.ta AS prev_ta,
+    s.py AS curr_py,
+    s.px AS curr_px,
+    s.ta AS curr_ta
+FROM ONIBUS_POSICAO_REKEY s
+LEFT JOIN ONIBUS_POSICAO_ATUAL t
+    ON s.p = t.p;
+
+
+
+CREATE TABLE ONIBUS_POSICAO_ATUAL_V2 AS
+SELECT
+    S_P,
+    LATEST_BY_OFFSET(prev_py) AS prev_py,
+    LATEST_BY_OFFSET(prev_px) AS prev_px,
+    LATEST_BY_OFFSET(prev_ta) AS prev_ta,
+    LATEST_BY_OFFSET(curr_py) AS curr_py,
+    LATEST_BY_OFFSET(curr_px) AS curr_px,
+    LATEST_BY_OFFSET(curr_ta) AS curr_ta
+FROM ONIBUS_POSICAO_ANTERIOR_ATUAL
+GROUP BY p;
+
+
+
+
+
+
+SELECT
+    S_P,
+    prev_py AS PREV_PY,
+    prev_px AS PREV_PX,
+    prev_ta AS PREV_TA,
+    curr_py AS CURR_PY,
+    curr_px AS CURR_PX,
+    curr_ta AS CURR_TA,
+    ROUND(
+        velocidade_media(
+            CAST(prev_py AS DECIMAL(9,6)),
+            CAST(prev_px AS DECIMAL(9,6)),
+            CAST(curr_py AS DECIMAL(9,6)),
+            CAST(curr_px AS DECIMAL(9,6)),
+            CONCAT(prev_ta,'Z'),
+            CONCAT(curr_ta,'Z')
+        ), 2
+    ) AS VELOCIDADE_KMH
+FROM ONIBUS_POSICAO_ANTERIOR_ATUAL
+WHERE curr_ta IS NOT NULL AND PREV_PY is not null ;
+
+
+
+CREATE TABLE ONIBUS_POSICAO_VELOCIDADE_ATUAL AS
+SELECT
+    S_P,
+    LATEST_BY_OFFSET(prev_py) AS prev_py,
+    LATEST_BY_OFFSET(prev_px) AS prev_px,
+    LATEST_BY_OFFSET(prev_ta) AS prev_ta,
+    LATEST_BY_OFFSET(curr_py) AS curr_py,
+    LATEST_BY_OFFSET(curr_px) AS curr_px,
+    LATEST_BY_OFFSET(curr_ta) AS curr_ta,
+    ROUND(
+        velocidade_media(
+            CAST(LATEST_BY_OFFSET(prev_py) AS DECIMAL(9,6)),
+            CAST(LATEST_BY_OFFSET(prev_px) AS DECIMAL(9,6)),
+            CAST(LATEST_BY_OFFSET(curr_py) AS DECIMAL(9,6)),
+            CAST(LATEST_BY_OFFSET(curr_px) AS DECIMAL(9,6)),
+            CONCAT(LATEST_BY_OFFSET(prev_ta),'Z'),
+            CONCAT(LATEST_BY_OFFSET(curr_ta),'Z')
+        ), 2
+    ) AS VELOCIDADE_KMH
+FROM ONIBUS_POSICAO_ANTERIOR_ATUAL
+GROUP BY S_P
+EMIT CHANGES;
+
+
+
+
 
 
 SELECT *

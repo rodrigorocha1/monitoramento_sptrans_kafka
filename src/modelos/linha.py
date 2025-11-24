@@ -11,6 +11,6 @@ class Linha(TypedDict):
     qv: int
     p: int
     a: bool
-    ta: datetime
+    ta: str
     py: float
     px: float

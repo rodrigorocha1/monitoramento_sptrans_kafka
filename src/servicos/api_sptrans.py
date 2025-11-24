@@ -49,11 +49,10 @@ class ApiSptrans:
                     qv=ln["qv"],
                     p=vs_item["p"],
                     a=vs_item["a"],
-                    ta=datetime.strptime(
-                        vs_item["ta"], "%Y-%m-%dT%H:%M:%SZ"
-                    ).replace(tzinfo=timezone.utc).astimezone(
-                        timezone(timedelta(hours=-3))
-                    ),
+                    ta=datetime.fromisoformat(vs_item["ta"].replace("Z", "+00:00"))
+                    .astimezone(timezone(timedelta(hours=-3)))
+                    .replace(tzinfo=None)
+                    .isoformat(),
                     py=vs_item["py"],
                     px=vs_item["px"],
                 ),
