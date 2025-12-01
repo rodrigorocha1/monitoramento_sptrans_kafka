@@ -1,10 +1,11 @@
-import streamlit as st
-from streamlit_folium import st_folium
-from streamlit_autorefresh import st_autorefresh
+import json
+
 import folium
+import streamlit as st
+from streamlit_autorefresh import st_autorefresh
+from streamlit_folium import st_folium
 
 from src.servicos.ksql_api import KsqlApi
-
 
 st.set_page_config(page_title="Monitor de Ônibus", layout="wide")
 
@@ -18,7 +19,7 @@ st.title("🚌 Monitoramento em Tempo Real – Live Tracking")
 
 # Entrada do usuário
 codigo_linha = st.text_input("Código da linha:", "4027-41")
-intervalo = st.slider("Intervalo de atualização (segundos)", 1, 60, 60)
+intervalo = st.slider("Intervalo de atualização (segundos)", 1, 300, 150)
 
 # Botão
 if st.button("Iniciar monitoramento"):
@@ -65,10 +66,11 @@ if st.session_state.monitorando:
         tabela = [
             {
                 "ID": d["id_onibus"],
-                "Latitude": d["py"],
-                "Longitude": d["px"],
+                "Latitude": f"{d['py']}",  # mantém TODAS as casas decimais
+                "Longitude": f"{d['px']}",  # mantém TODAS as casas decimais
                 "Horário": d["ta"]
             }
             for d in dados
         ]
-        st.dataframe(tabela, use_container_width=True)
+
+        st.code(json.dumps(tabela, indent=4, ensure_ascii=False), language="json")

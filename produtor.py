@@ -86,4 +86,4 @@ class Produtor:
 
 if __name__ == '__main__':
     produtor = Produtor()
-    produtor.rodar_produtor(intervalo= 1 * 60)
+    produtor.rodar_produtor(intervalo= 3 * 60)

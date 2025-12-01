@@ -1,3 +1,6 @@
+https://chatgpt.com/c/692cea9d-a2a8-8325-b1f5-4ec7f090f77c -> padrão de projeto
+
+
 CREATE STREAM ONIBUS_POSICAO_BRUTO (
     c STRING,
     cl INTEGER,
