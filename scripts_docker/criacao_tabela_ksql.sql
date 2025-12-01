@@ -25,6 +25,16 @@ SELECT
 FROM ONIBUS_POSICAO_BRUTO
 GROUP BY p;
 
+CREATE TABLE ONIBUS_POSICAO_ATUAL AS
+SELECT
+    p,
+    LATEST_BY_OFFSET(c) AS c,
+    LATEST_BY_OFFSET(py) AS py,
+    LATEST_BY_OFFSET(p) AS id_onibus,
+    LATEST_BY_OFFSET(px) AS px,
+    LATEST_BY_OFFSET(ta) AS ta
+FROM ONIBUS_POSICAO_BRUTO
+GROUP BY p;
 ---
 
 CREATE TABLE ONIBUS_POSICAO_ATUAL AS
@@ -115,6 +125,7 @@ GROUP BY p;
 
 SELECT
     S_P,
+    C,
     prev_py AS PREV_PY,
     prev_px AS PREV_PX,
     prev_ta AS PREV_TA,
@@ -205,13 +216,13 @@ GROUP BY c;
 SET 'auto.offset.reset' = 'latest';
 
 ====================================================
-CREATE STREAM ONIBUS_POSICAO_REKEY AS
+CREATE STREAM ONIBUS_POSICAO_REKEY_V2 AS
 SELECT
     CONCAT(c, '-', lt0, '-', lt1) AS chave_distinta,
     c,
     lt0,
     lt1
-FROM ONIBUS_POSICAO
+FROM ONIBUS_POSICAO_BRUTO
 PARTITION BY CONCAT(c, '-', lt0, '-', lt1);
 
 CREATE TABLE ONIBUS_C_LT0_LT1_DISTINCT AS
