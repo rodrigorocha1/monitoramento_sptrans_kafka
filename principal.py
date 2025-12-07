@@ -1,5 +1,5 @@
-from src.views.dashboard import Dashboard
+from src.views.dashboard_view import DashboardView
 
-d = Dashboard()
+dv = DashboardView()
 
-d.rodar_dashboard()
+dv.rodar_dashboard()
