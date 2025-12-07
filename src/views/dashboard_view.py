@@ -33,6 +33,7 @@ class DashboardView:
             print(f'Atualizei as {datetime.now().strftime("%d-%m-%Y %H:%M:%S")}')
 
             dados = self.__controller.obter_posicao_atual(codigo_linha)
+            nome_linha = self.__controller.obter_nome_linha(codigo_linha=codigo_linha)
 
             if not dados:
                 st.warning("Nenhuma posição encontrada.")
@@ -49,6 +50,7 @@ class DashboardView:
 
             st.write(f"### Atualizado em: **{datetime.now().strftime('%d-%m-%Y %H:%M:%S')}**")
             st.write(f"Próxima atualização em: **{intervalo} segundos**")
+            st.write(f"Dados da linha {codigo_linha} - {nome_linha[0][0]}**")
 
             col1, col2 = st.columns([2, 1])
 
@@ -76,8 +78,8 @@ class DashboardView:
                 st_folium(mapa, width=900, height=700, returned_objects=[])
 
             with col2:
-                st.write("### Dados dos Ônibus")
-                st.dataframe(dados_velocidade)
+                st.write("### Dados das velocidades de cada ônibus")
+                st.dataframe(dados_velocidade, width=600, height=300)
 
     def rodar_dashboard(self):
         self.gerar_titulo()

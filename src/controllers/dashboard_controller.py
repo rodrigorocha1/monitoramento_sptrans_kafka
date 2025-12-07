@@ -10,6 +10,16 @@ class DashboardController:
         self.__consulta = Consulta()
         self.__ksql_api = KsqlApi()
 
+    def obter_nome_linha(self, codigo_linha: str):
+        sql = """
+        select r.route_long_name 
+        FROM routes r   
+        where r.route_id  = :codigo
+        """
+        resultado = self.__consulta.consulta(sql=sql, params={"codigo": codigo_linha})
+
+        return resultado
+
     def rodar_consulta_trajeto_onibus(self, codigo_linha: str):
         sql_viagem = """
             select  s.shape_pt_lat , s.shape_pt_lon , r.route_color 
@@ -21,7 +31,6 @@ class DashboardController:
 ;
         """
         resultado = self.__consulta.consulta(sql_viagem, {"codigo": codigo_linha})
-
         return resultado
 
     def obter_posicao_atual(self, codigo_linha: str):
@@ -78,3 +87,4 @@ class DashboardController:
         }
         dados_dict = list(map(to_dict, dados_onibus))
         return dados_dict
+
