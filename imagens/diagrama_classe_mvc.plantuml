@@ -1,0 +1,65 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+package "src" {
+
+    package "models" as models {
+
+        class Database {
+            - caminho_base: str
+            - engine: Engine
+            - SessionLocal
+            + obter_sessao(): Session
+        }
+
+        class Consulta {
+            - db: Database
+            + consulta(sql: str, params: Dict=None): List<Row>
+        }
+
+        Database "1" *-- "1" Consulta : composição
+    }
+
+    package "service" as service {
+        class KsqlApi {
+            - URL: str
+            + executar_consulta(sql: str): Response
+        }
+    }
+
+    package "controllers" as controllers {
+        class DashboardController {
+            - consulta: Consulta
+            - ksql_api: KsqlApi
+            + obter_nome_linha(codigo_linha: str)
+            + rodar_consulta_trajeto_onibus(codigo_linha: str)
+            + obter_posicao_atual(codigo_linha: str)
+            + obter_velocidade_onibus(codigo_linha: str)
+        }
+    }
+
+    package "dashboard_view" as view {
+        class DashboardView {
+            + controller: DashboardController
+            + gerar_titulo()
+            + gerar_inputs()
+            + gerar_dados(codigo_linha: str, intervalo: int)
+            + rodar_dashboard()
+        }
+    }
+
+
+
+    DashboardController "1" *-- "1" Consulta
+    DashboardController "1" *-- "1" KsqlApi
+    DashboardView "1" --> "1" DashboardController
+
+
+    service -[hidden]-> models
+    models  -[hidden]-> controllers
+    controllers -[hidden]-> view
+}
+
+@enduml
